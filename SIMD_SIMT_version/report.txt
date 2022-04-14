@@ -1,0 +1,6 @@
+Parallelization Strategy:
+First I analyzed the time of the 2 steps of calculating, and found that the second step takes way more time than the first step. So I focused on ooptimizing the first step.
+1. SIMT: I analyzed the code and found that there is no critical section and the code can be totally paralleled. So I just partitioned all the arrays for points ontpo NUM_THREAD parts. Each part is calculated in one thread. And I used 260 threads.
+2. SIMD: For the inner loop, I used Intel intrinsic functions to vectorize the calculation. I used 512-bit vector.
+
+The runtime I measured on the 64-scanline input: 1397932 usecs, about 80x speedup.
