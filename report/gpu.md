@@ -60,3 +60,16 @@ We implemented two GPU accelerated algorithms based on two parallelization strat
 
 It is interesting to find that optimal parallelization strategy differs between GPU and other platforms such as FPGA. For GPU, dividing parallelism across scanline is much better than dividing parallelism across transducer channels because of large local memory. On the other hand, global memory synchronization is expensive and inefficient. So shared read only mem is acceptable, while shared writable mem should be avoided. For FPGA, however, dividing parallelism across transducer is much better than dividing parallelism across scanline because of low sync & wire overhead and high on-chip memory buffer overhead. For on-chip design, wiring is cheap while buffer is expensive.
 
+## TODO
+
+- cpu simd gpu run at param: 
+  - cpu multi
+  - simd
+  - co
+  - #thread | #hard core
+  - gpu: cuda core
+- algorithm change
+  - gpu
+- vtune:
+- param: time; hardware( cpu core; ); precision 
+
