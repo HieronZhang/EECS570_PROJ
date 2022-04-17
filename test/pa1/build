@@ -1,0 +1,14 @@
+#!/bin/bash
+set -Eeuo pipefail
+
+if [ "$#" -ne 0 ]; then 
+    echo "Usage: ./build"
+    exit 1
+fi
+
+
+# module load cuda
+export PATH=/usr/local/cuda-10.0/bin/:$PATH
+nvcc -g -G pa1_gpu.cu -o pa1_gpu_gl -std=c++11
+
+echo "Successfully built"

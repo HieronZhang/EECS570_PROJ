@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 #ifdef __MIC__
 	sprintf(buff, "/beamforming_input_%s.bin", argv[1]);
 #else // !__MIC__
-	sprintf(buff, "../../src/beamforming_input_%s.bin", argv[1]);
+	sprintf(buff, "../src/beamforming_input_%s.bin", argv[1]);
 #endif
 
 	input = fopen(buff, "rb");
