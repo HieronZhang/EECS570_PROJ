@@ -9,6 +9,7 @@
 #include <time.h>
 #include <stdint.h>
 
+
 #define TX_X 0
 #define TX_Y 0
 #define TX_Z -0.001
@@ -18,6 +19,8 @@
 #define DATA_LEN 12308 // Number for pre-processed data values per channel
 #define IDX_CONST 0.000009625 // Speed of sound and sampling rate, converts dist to index
 #define FILTER_DELAY 140		 // Constant added to index to account filter delay (off by 1 from MATLAB)
+
+const int block_size = 512;
 
 void __global__ transmit_distance(const float *point_x, const float *point_y, const float *point_z, float *dist_tx);
 void __global__ reflected_distance(const float *point_x, const float *point_y, const float *point_z, const float *rx_x, const float *rx_y, const float *rx_data, const float *dist_tx, float *image);
@@ -147,7 +150,7 @@ int main(int argc, char **argv)
 
 	const int data_num = pts_r * sls_t * sls_p;
 	const int data_size = data_num * sizeof(float);
-	const int block_size = 512;
+	
 	const int grid_size = data_num / block_size;
 
 	// TODO: copy rx_x, rx_y, point_xyz into gpu mem space
@@ -242,7 +245,23 @@ void __global__ transmit_distance(const float *point_x, const float *point_y, co
 
 void __global__ reflected_distance(const float *point_x, const float *point_y, const float *point_z, const float *rx_x, const float *rx_y, const float *rx_data, const float *dist_tx, float *image)
 {
+	__shared__ float subTilePoint_x[block_size];
+	__shared__ float subTilePoint_y[block_size];
+	__shared__ float subTilePoint_z[block_size];
+	__shared__ float subTileDist_tx[block_size];
+	__shared__ float subTileImage[block_size];
+	
+
 	const int point = blockDim.x * blockIdx.x + threadIdx.x;
+
+	subTilePoint_x[threadIdx.x] = point_x[point];
+	subTilePoint_y[threadIdx.x] = point_y[point];
+	subTilePoint_z[threadIdx.x] = point_z[point];
+	subTileDist_tx[threadIdx.x] = dist_tx[point];
+	subTileImage[threadIdx.x] = 0;
+
+	__syncthreads();
+	
 
 	float x_comp, y_comp, z_comp;
 	int offset = 0;
@@ -250,16 +269,20 @@ void __global__ reflected_distance(const float *point_x, const float *point_y, c
 	for (int it_rx = 0; it_rx < TRANS_X * TRANS_Y; it_rx++)
 	{
 
-		x_comp = rx_x[it_rx] - point_x[point];
+		x_comp = rx_x[it_rx] - subTilePoint_x[threadIdx.x];
 		x_comp = x_comp * x_comp;
-		y_comp = rx_y[it_rx] - point_y[point];
+		y_comp = rx_y[it_rx] - subTilePoint_y[threadIdx.x];
 		y_comp = y_comp * y_comp;
-		z_comp = RX_Z - point_z[point];
+		z_comp = RX_Z - subTilePoint_z[threadIdx.x];
 		z_comp = z_comp * z_comp;
 
-		float dist = dist_tx[point] + (float)sqrt(x_comp + y_comp + z_comp);
+		float dist = subTileDist_tx[threadIdx.x] + (float)sqrt(x_comp + y_comp + z_comp);
 		index = (int)(dist / IDX_CONST + FILTER_DELAY + 0.5);
-		image[point] += rx_data[index + offset];
+		subTileImage[threadIdx.x] += rx_data[index + offset];
 		offset += DATA_LEN;
 	}
+
+	__syncthreads();
+
+	image[point] = subTileImage[threadIdx.x];
 }
