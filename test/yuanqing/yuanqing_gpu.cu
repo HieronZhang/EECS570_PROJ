@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 #ifdef __MIC__
 	sprintf(buff, "/beamforming_input_%s.bin", argv[1]);
 #else // !__MIC__
-	sprintf(buff, "../../src/beamforming_input_%s.bin", argv[1]);
+	sprintf(buff, "../src/beamforming_input_%s.bin", argv[1]);
 #endif
 
 	input = fopen(buff, "rb");
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 
 	const int data_num = pts_r * sls_t * sls_p;
 	const int data_size = data_num * sizeof(float);
-	const int block_size = 128;
+	const int block_size = 512;
 	const int grid_size = sls_t * sls_p / block_size;
 
 	// TODO: copy rx_x, rx_y, point_xyz into gpu mem space

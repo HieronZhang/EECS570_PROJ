@@ -1,0 +1,7 @@
+Beginning computation, size is 32, BLOCK_SIZE is 64
+Processing complete.  Preparing output.
+Output complete.
+
+real	0m0.468s
+user	0m0.077s
+sys	0m0.258s
